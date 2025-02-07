@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Usage by Process</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 20px;
+            padding: 20px;
+            text-align: center;
+        }
+        #search {
+            width: 300px; /* Make it wider */
+            padding: 10px; /* Add more padding */
+            font-size: 16px; /* Increase font size */
+            border: 1px solid #007bff;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            outline: none;
+        }
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            margin: 0 5px;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .tab.active {
+            background: #0056b3;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            max-width: 900px;
+            margin: auto;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+    <script>
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+    
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        }
+    
+        function fetchNetworkUsage() {
+            fetch('/network/api/data/')
+                .then(response => response.json())
+                .then(data => {
+                    let tableBody = document.getElementById("network-table-body");
+                    tableBody.innerHTML = ""; // Clear existing table rows
+    
+                    data.processes.forEach(proc => {
+                        let row = `<tr>
+                            <td>${proc.pid}</td>
+                            <td>${proc.name}</td>
+                            <td>${proc.username}</td>
+                            <td>${proc.bytes_sent}</td>
+                            <td>${proc.bytes_received}</td>
+                            <td>${proc.connections}</td>
+                        </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+    
+                    // Apply search filtering after data is fetched
+                    searchNetworkProcesses();
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+    
+        function searchNetworkProcesses() {
+            let input = document.getElementById("search").value.toLowerCase();
+            let rows = document.querySelectorAll("#network-table-body tr");
+    
+            rows.forEach(row => {
+                let processName = row.cells[1].textContent.toLowerCase();
+                row.style.display = processName.includes(input) ? "" : "none";
+            });
+        }
+    
+        // Refresh every 3 seconds
+        setInterval(fetchNetworkUsage, 3000);
+        window.onload = fetchNetworkUsage;
+    </script>
+    
+</head>
+<body>
+    <h1>System Monitoring</h1>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="window.location.href='/network/'">Network Usage</button>
+            <button class="tab" onclick="window.location.href='/processes/'">Processes</button>
+        </div>
+        
+
+    <!-- Network Usage Content -->
+    <div id="network-tab" class="tab-content active">
+        <h1>Network Manager</h1>
+        <input type="text" id="search" onkeyup="fetchNetworkUsage()" placeholder="Search for a process...">
+        <table>
+            <thead>
+                <tr>
+                    <th>PID</th>
+                    <th>Process Name</th>
+                    <th>Username</th>
+                    <th>Bytes Sent</th>
+                    <th>Bytes Received</th>
+                    <th>Active Connections</th>
+                </tr>
+            </thead>
+            <tbody id="network-table-body">
+                <!-- Data will be dynamically inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>

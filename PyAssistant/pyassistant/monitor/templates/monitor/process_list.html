@@ -8,127 +8,181 @@
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
+            margin: 20px;
+            padding: 20px;
             text-align: center;
         }
-        .container {
-            width: 80%;
-            margin: 30px auto;
-            background: white;
-            padding: 20px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
+        #search {
+            width: 300px; /* Make it wider */
+            padding: 10px; /* Add more padding */
+            font-size: 16px; /* Increase font size */
+            border: 1px solid #007bff;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            outline: none;
         }
-        h1 {
-            color: #333;
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #007bff;
         }
-        input {
-            padding: 10px;
-            width: 60%;
-            margin-bottom: 10px;
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            margin: 0 5px;
+            border-radius: 5px 5px 0 0;
         }
+
+        .tab.active {
+            background: #0056b3;
+        }
+
         table {
             width: 100%;
+            max-width: 900px;
+            margin: auto;
             border-collapse: collapse;
-            margin-top: 20px;
+            background: white;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
         }
+
         th, td {
-            padding: 12px;
-            border-bottom: 1px solid #ddd;
+            padding: 10px;
+            border: 1px solid #ddd;
             text-align: left;
         }
+
         th {
-            background-color: #007BFF;
+            background-color: #007bff;
             color: white;
         }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
         tr:hover {
             background-color: #f1f1f1;
         }
+
+        /* Kill Button Styling */
         .kill-btn {
             background-color: red;
             color: white;
-            padding: 5px;
             border: none;
+            padding: 5px 10px;
             cursor: pointer;
-            border-radius: 5px;
+            border-radius: 4px;
+            font-size: 14px;
         }
+
         .kill-btn:hover {
             background-color: darkred;
         }
     </style>
+
     <script>
-        // Function to filter/search processes
-        function searchProcesses() {
-            const filter = document.getElementById("search").value.toUpperCase();
-            const table = document.getElementById("process-table-body");
-            const rows = table.getElementsByTagName("tr");
-    
-            for (let row of rows) {
-                const processName = row.cells[0].textContent || row.cells[0].innerText;
-                row.style.display = processName.toUpperCase().includes(filter) ? "" : "none";
-            }
+        function fetchProcesses() {
+            fetch(window.location.href)
+                .then(response => response.text())
+                .then(html => {
+                    let parser = new DOMParser();
+                    let doc = parser.parseFromString(html, 'text/html');
+                    let newTableBody = doc.getElementById("process-table-body").innerHTML;
+                    let tableBody = document.getElementById("process-table-body");
+
+                    // Preserve the search input value
+                    let searchInput = document.getElementById("search").value.toLowerCase();
+
+                    // Update table while keeping filtered results
+                    tableBody.innerHTML = newTableBody;
+                    searchProcesses();
+                })
+                .catch(error => console.error('Error fetching process data:', error));
         }
+
+        function searchProcesses() {
+            let input = document.getElementById("search").value.toLowerCase();
+            let rows = document.querySelectorAll("#process-table-body tr");
+
+            rows.forEach(row => {
+                let processName = row.cells[0].textContent.toLowerCase();
+                row.style.display = processName.includes(input) ? "" : "none";
+            });
+        }
+
+        function getCSRFToken() {
+            let cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+            return cookie ? cookie.split('=')[1] : null;
+        }
+
 
         function killProcess(pid) {
-        if (!pid) {
-            alert("Invalid process ID.");
-            return;
-        }
-
-        if (!confirm(`Are you sure you want to kill process ${pid}?`)) {
-            return;
-        }
-
-        fetch(`/processes/kill/${pid}/`, { 
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCSRFToken()
+            if (!pid) {
+                alert("Invalid process ID.");
+                return;
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message);
-                location.reload();
-            } else {
-                alert(`Error: ${data.message}`);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert("Failed to terminate the process. Check logs for details.");
-        });
-    }
 
-    function getCSRFToken() {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.startsWith('csrftoken=')) {
-                    cookieValue = cookie.substring('csrftoken='.length, cookie.length);
-                    break;
+            if (!confirm(`Are you sure you want to kill process ${pid}?`)) {
+                return;
+            }
+
+            fetch(`/processes/kill/${pid}/`, { 
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
                 }
-            }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    fetchProcesses();  // Refresh process list after killing
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Failed to terminate the process. Check logs for details.");
+            });
         }
-        return cookieValue;
-    }
+
+        setInterval(fetchProcesses, 3000);
+        window.onload = fetchProcesses;
     </script>
 </head>
 <body>
+
+    <h1>System Monitoring</h1>
+
+    <div class="tabs">
+        <button class="tab" onclick="window.location.href='/network/'">Network Usage</button>
+        <button class="tab active" onclick="window.location.href='/processes/'">Processes</button>
+    </div>
+
     <div class="container">
         <h1>Process Manager</h1>
-        <input type="text" id="search" onkeyup="searchProcesses()" placeholder="Search process...">
+        <input type="text" id="search" onkeyup="searchProcesses()" placeholder="Search process..." autofocus>
         <table>
-            <tr>
-                <th>Process Name</th>
-                <th>PID</th>
-                <th>Execution Time</th>
-                <th>CPU Usage (%)</th>
-                <th>Action</th>
-            </tr>
+            <thead>
+                <tr>
+                    <th>Process Name</th>
+                    <th>PID</th>
+                    <th>Execution Time</th>
+                    <th>CPU Usage (%)</th>
+                    <th>Memory Usage (%)</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
             <tbody id="process-table-body">
                 {% for process in processes %}
                 <tr>
@@ -136,15 +190,17 @@
                     <td>{{ process.pid }}</td>
                     <td>{{ process.execution_time }}</td>
                     <td>{{ process.cpu_usage }}%</td>
+                    <td>{{ process.memory_usage }}%</td>
                     <td><button class="kill-btn" onclick="killProcess('{{ process.pid }}')">Kill</button></td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5">No processes found</td>
+                    <td colspan="6">No processes found</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
 </body>
 </html>

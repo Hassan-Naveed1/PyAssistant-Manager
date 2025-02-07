@@ -19,7 +19,8 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('processes/', include('monitor.urls')),  # Changed from 'monitor/' to 'processes/'
+    path('processes/', include('monitor.urls')),  # Ensure this line exists
+    path('network/', include('network.urls')),
 ]
 
 
