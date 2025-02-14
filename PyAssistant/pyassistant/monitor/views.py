@@ -3,7 +3,7 @@ from django.http import JsonResponse
 import os
 import psutil
 import datetime
-from django.views.decorators.csrf import csrf_exempt  # Import CSRF exemption
+from django.views.decorators.csrf import csrf_exempt  
 from django.utils.decorators import method_decorator
 import subprocess
 
@@ -19,12 +19,12 @@ def get_process_data():
             name = proc.info['name'] or "Unknown"
             cpu_usage = proc.info['cpu_percent'] or 0  # CPU Usage
             
-            # Handle missing memory_info (avoid KeyError)
-            memory_usage = 0  # Default to 0% if memory info is unavailable
+            
+            memory_usage = 0  
             if 'memory_info' in proc.info and proc.info['memory_info']:
                 memory_usage = (proc.info['memory_info'].rss / total_memory) * 100  # Memory Usage Percentage
             
-            # Calculate execution time safely
+            
             start_time = proc.info['create_time']
             execution_time = "00:00:00" if start_time is None else str(
                 datetime.datetime.now() - datetime.datetime.fromtimestamp(start_time)
