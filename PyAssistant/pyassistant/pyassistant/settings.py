@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-)%@*op9a+1z6rvpe4wiyq=92e6ma7c!10fkwke&dyf7bl9z%a^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'monitor',
     'network',
+    'pyassistant',
     
     
 ]
@@ -58,7 +59,7 @@ ROOT_URLCONF = 'pyassistant.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'monitor/templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # Ensure this includes the correct path
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -70,6 +71,12 @@ TEMPLATES = [
         },
     },
 ]
+
+
+
+
+
+
 
 WSGI_APPLICATION = 'pyassistant.wsgi.application'
 

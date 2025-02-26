@@ -1,77 +1,89 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-import os
+from pyassistant.models import Host  
 import psutil
 import datetime
-from django.views.decorators.csrf import csrf_exempt  
-from django.utils.decorators import method_decorator
-import subprocess
+import paramiko
+import logging
 
 
+def get_process_data_from_remote(host_ip, hostname, password):
+    """Retrieve process data from a remote host via SSH."""
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-def get_process_data():
-    process_list = []
-    total_memory = psutil.virtual_memory().total  # Get total system memory for percentage calculation
+    try:
+        
+        client.connect(host_ip, username=hostname, password=password)  
+        stdin, stdout, stderr = client.exec_command("ps aux")
 
-    for proc in psutil.process_iter(attrs=['pid', 'name', 'cpu_percent', 'memory_info', 'create_time']):
-        try:
-            pid = proc.info['pid']
-            name = proc.info['name'] or "Unknown"
-            cpu_usage = proc.info['cpu_percent'] or 0  # CPU Usage
-            
-            
-            memory_usage = 0  
-            if 'memory_info' in proc.info and proc.info['memory_info']:
-                memory_usage = (proc.info['memory_info'].rss / total_memory) * 100  # Memory Usage Percentage
-            
-            
-            start_time = proc.info['create_time']
-            execution_time = "00:00:00" if start_time is None else str(
-                datetime.datetime.now() - datetime.datetime.fromtimestamp(start_time)
-            ).split('.')[0]  # HH:MM:SS format
+        process_list = []
+        for line in stdout.read().decode().splitlines()[1:]:  
+            columns = line.split()
+            if len(columns) > 10:
+                process_list.append({
+                    'pid': int(columns[1]),
+                    'name': columns[10],
+                    'cpu_usage': float(columns[2]),
+                    'memory_usage': float(columns[3]),
+                    'execution_time': columns[9]
+                })
 
-            process_list.append({
-                'name': name,
-                'pid': pid,
-                'execution_time': execution_time,
-                'cpu_usage': cpu_usage,
-                'memory_usage': round(memory_usage, 2)  # Round to 2 decimal places
-            })
+        return process_list
 
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            pass  # Skip inaccessible processes
+    except Exception as e:
+        logging.error(f"SSH Error: {e}")
+        return []
 
-    # Sort processes alphabetically
-    process_list.sort(key=lambda x: x['name'].lower())
-
-    return process_list
+    finally:
+        client.close()
 
 
 def process_list_view(request):
-    #This function calls get_process_data() to fetch the process details
-    #so i have also a template file as table format meaning it will display the data as i have structured in table 
-    """ Render the HTML page with process data """
-    processes = get_process_data()  # Get process list
-    return render(request, 'monitor/process_list.html', {'processes': processes})  # Pass processes to template
+    """View to fetch remote process data for all hosts in the database."""
+    hosts = Host.objects.all()  
+    all_processes = {}
 
 
-def kill_process(request, pid):
-    #Send the request to the file that i have created called process_killer.py to kill a process
-    """ Calls process_killer.py to kill a process """
-    if request.method == "POST":
+    for host in hosts:
         try:
+            processes = get_process_data_from_remote(host.ip_address, host.hostname, host.password)
+            all_processes[host.hostname] = processes
+        except Exception as e:
 
-            script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../process_killer.py"))
+            all_processes[host.hostname] = f"Error fetching data: {e}"
+
+    return render(request, 'monitor/process_list.html', {'all_processes': all_processes})
 
 
-            result = subprocess.run(["python3", script_path, str(pid)], capture_output=True, text=True)
+def kill_process(request, host_id, pid):
+    """Kill a process on a remote host via SSH."""
+    if request.method == "POST":
+        host = Host.objects.get(id=host_id)  
+        host_ip = host.ip_address
+        hostname = host.hostname  
+        password = host.password
 
-            if result.returncode == 0:
-                return JsonResponse({"success": True, "message": f"Process {pid} termination requested."})
-            else:
-                return JsonResponse({"success": False, "message": f"Failed to terminate process {pid}. Error: {result.stderr}"}, status=400)
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        try:
+            client.connect(host_ip, username=hostname, password=password)  
+            stdin, stdout, stderr = client.exec_command(f"kill -9 {pid}")
+
+            result = stdout.read().decode()
+            error = stderr.read().decode()
+
+            client.close()
+
+            if error:
+                logging.error(f"Kill process error: {error}")
+                return JsonResponse({"success": False, "message": f"Failed to terminate process {pid}. {error}"}, status=400)
+
+            return JsonResponse({"success": True, "message": f"Process {pid} terminated remotely."})
 
         except Exception as e:
+            logging.error(f"Kill process error: {e}")
             return JsonResponse({"success": False, "message": f"Unexpected error: {str(e)}"}, status=500)
 
     return JsonResponse({"success": False, "message": "Invalid request method."}, status=400)

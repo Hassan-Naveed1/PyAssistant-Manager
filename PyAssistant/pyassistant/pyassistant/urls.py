@@ -16,11 +16,19 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from . import views
+from monitor import views as monitor_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('processes/', include('monitor.urls')),  
+    path('processes/', include('monitor.urls')),
     path('network/', include('network.urls')),
+
+    # Host-related URLs
+    path('hosts/', views.host_list, name='host_list'),
+    path('add/', views.add_host, name='add_host'),
+    path('hosts/<int:host_id>/processes/', views.view_host_processes, name='view_host_processes'),
+    path('hosts/<int:host_id>/processes/kill/<int:pid>/', monitor_views.kill_process, name='kill_process'),  # Correct the import here
 ]
 
 

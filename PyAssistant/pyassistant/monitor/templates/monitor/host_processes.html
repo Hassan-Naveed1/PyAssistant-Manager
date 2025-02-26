@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Process Manager</title>
+    <title>Host Process Manager</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #f8f9fa;
             margin: 20px;
             padding: 20px;
             text-align: center;
         }
+        
         #search {
             width: 300px;
             padding: 10px;
@@ -20,6 +21,11 @@
             border-radius: 5px;
             margin-bottom: 15px;
             outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        #search:focus {
+            border-color: #0056b3;
         }
 
         .tabs {
@@ -51,11 +57,11 @@
             margin: auto;
             border-collapse: collapse;
             background: white;
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         th, td {
-            padding: 10px;
+            padding: 12px 15px;
             border: 1px solid #ddd;
             text-align: left;
         }
@@ -73,15 +79,15 @@
             background-color: #f1f1f1;
         }
 
-        /* Kill Button Styling */
         .kill-btn {
             background-color: red;
             color: white;
             border: none;
-            padding: 5px 10px;
+            padding: 8px 15px;
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 5px;
             font-size: 14px;
+            transition: background-color 0.3s ease;
         }
 
         .kill-btn:hover {
@@ -92,14 +98,13 @@
 <script>
 
     function fetchProcesses() {
-        fetch(window.location.href)  
-            .then(response => response.text())  
+        fetch(window.location.href)
+            .then(response => response.text())
             .then(html => {
                 let parser = new DOMParser();
                 let doc = parser.parseFromString(html, 'text/html');
                 let newTableBody = doc.getElementById("process-table-body").innerHTML;
                 let tableBody = document.getElementById("process-table-body");
-
 
                 let searchInput = document.getElementById("search").value.toLowerCase();
 
@@ -116,7 +121,7 @@
         let rows = document.querySelectorAll("#process-table-body tr");
 
         rows.forEach(row => {
-            let processName = row.cells[0].textContent.toLowerCase(); 
+            let processName = row.cells[0].textContent.toLowerCase();  
             row.style.display = processName.includes(input) ? "" : "none";  
         });
     }
@@ -124,21 +129,21 @@
 
     function getCSRFToken() {
         let cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
-        return cookie ? cookie.split('=')[1] : null;  
+        return cookie ? cookie.split('=')[1] : null; 
     }
 
-
-    function killProcess(pid) {
+    function killProcess(host_id, pid) {
         if (!pid) {
             alert("Invalid process ID.");
             return;
         }
 
+
         if (!confirm(`Are you sure you want to kill process ${pid}?`)) {
             return;
         }
 
-        fetch(`/processes/kill/${pid}/`, {  
+        fetch(`/hosts/${host_id}/processes/kill/${pid}/`, {  
             method: 'POST',
             headers: {
                 'X-CSRFToken': getCSRFToken()  
@@ -147,10 +152,10 @@
         .then(response => response.json())  
         .then(data => {
             if (data.success) {
-                alert(data.message);  
+                alert(data.message); 
                 fetchProcesses();  
             } else {
-                alert(`Error: ${data.message}`);  
+                alert(`Error: ${data.message}`); 
             }
         })
         .catch(error => {
@@ -162,14 +167,14 @@
     // Refresh the process list every 3 seconds (3000 milliseconds)
     setInterval(fetchProcesses, 3000);
 
-
+    // On page load, fetch processes once
     window.onload = fetchProcesses;
 </script>
 
 </head>
 <body>
 
-    <h1>System Monitoring</h1>
+    <h1>Host Process Manager</h1>
 
     <div class="tabs">
         <button class="tab" onclick="window.location.href='/network/'">Network Usage</button>
@@ -177,7 +182,7 @@
     </div>
 
     <div class="container">
-        <h1>Process Manager</h1>
+        <h2>Processes for Host: {{ host.hostname }}</h2>
         <input type="text" id="search" onkeyup="searchProcesses()" placeholder="Search process..." autofocus>
         <table>
             <thead>
@@ -198,7 +203,7 @@
                     <td>{{ process.execution_time }}</td>
                     <td>{{ process.cpu_usage }}%</td>
                     <td>{{ process.memory_usage }}%</td>
-                    <td><button class="kill-btn" onclick="killProcess('{{ process.pid }}')">Kill</button></td>
+                    <td><button class="kill-btn" onclick="killProcess('{{ host.id }}', '{{ process.pid }}')">Kill</button></td>
                 </tr>
                 {% empty %}
                 <tr>
