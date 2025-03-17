@@ -1,7 +1,6 @@
 from django.urls import path
-from . import views
+from .views import network_view
 
 urlpatterns = [
-    path('', views.network_usage, name='network_usage'),  # Main page at /network/
-    path('api/data/', views.get_network_usage_data, name='network_api_data'),  # API at /network/api/data/
+    path('<int:host_id>/', network_view, name='network_view'),
 ]

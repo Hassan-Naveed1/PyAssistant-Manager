@@ -22,8 +22,8 @@ from monitor import views as monitor_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('processes/', include('monitor.urls')),
-    path('network/', include('network.urls')),
     path('storage/', include('storage.urls')),
+    path('network/', include('network.urls')),
 
 
     # Host-related URLs

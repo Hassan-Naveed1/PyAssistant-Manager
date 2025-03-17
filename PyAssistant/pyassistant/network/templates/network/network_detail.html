@@ -1,0 +1,48 @@
+{% extends "pyassistant/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Network Usage for {{ host.hostname }}</h2>
+
+    <!-- Auto-refresh every 3 seconds -->
+    <script>
+        setTimeout(function() {
+            location.reload();
+        }, 3000);  // 3000ms = 3 seconds
+    </script>
+
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% else %}
+        <!-- Show the network graph ABOVE the table -->
+        <h3>Network Speeds</h3>
+        <div class="text-center">
+            <img src="{{ graph }}" alt="Network Graph" class="img-fluid" style="max-width: 500px;">
+        </div>
+
+        <!-- Keep the table below the graph -->
+        <table class="table table-bordered mt-4">
+            <thead>
+                <tr>
+                    <th>Upload Speed (MB/s)</th>
+                    <th>Download Speed (MB/s)</th>
+                    <th>Total Usage (MB)</th>
+                    <th>Last Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ network_data.upload_speed|floatformat:2 }}</td>
+                    <td>{{ network_data.download_speed|floatformat:2 }}</td>
+                    <td>{{ network_data.total_usage|floatformat:2 }}</td>
+                    <td>{{ network_data.timestamp }}</td>
+                </tr>
+            </tbody>
+        </table>
+    {% endif %}
+
+    <a href="{% url 'host_list' %}" class="btn btn-secondary mt-3">Back to Hosts</a>
+</div>
+{% endblock %}
