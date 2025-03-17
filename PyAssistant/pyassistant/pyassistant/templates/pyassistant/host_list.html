@@ -1,6 +1,5 @@
 {% extends "pyassistant/base.html" %}
 
-
 {% block content %}
 <div class="container mt-4">
     <h2>Registered Hosts</h2>
@@ -19,7 +18,7 @@
                 <td>{{ host.ip_address }}</td>
                 <td>
                     <a href="{% url 'view_host_processes' host.id %}" class="btn btn-info btn-sm">View Processes</a>
-                    
+                    <a href="{% url 'storage_view' host.id %}" class="btn btn-warning btn-sm">View Storage</a>
                 </td>
             </tr>
             {% empty %}

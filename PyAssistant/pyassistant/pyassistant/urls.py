@@ -23,6 +23,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('processes/', include('monitor.urls')),
     path('network/', include('network.urls')),
+    path('storage/', include('storage.urls')),
+
 
     # Host-related URLs
     path('hosts/', views.host_list, name='host_list'),

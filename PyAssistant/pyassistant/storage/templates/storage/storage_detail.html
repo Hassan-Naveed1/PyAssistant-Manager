@@ -1,0 +1,41 @@
+{% extends "storage/storage_base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Storage Details for {{ host.hostname }}</h2>
+
+    {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% else %}
+        <!--Show the graph ABOVE the table -->
+        <h3>Storage Usage</h3>
+        <div class="text-center">
+            <img src="{{ graph }}" alt="Storage Graph" class="img-fluid" style="max-width: 500px;">
+        </div>
+
+        <!--Keep the table below the graph -->
+        <table class="table table-bordered mt-4">
+            <thead>
+                <tr>
+                    <th>Total Space (GB)</th>
+                    <th>Used Space (GB)</th>
+                    <th>Free Space (GB)</th>
+                    <th>Last Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ storage_data.total_space }}</td>
+                    <td>{{ storage_data.used_space }}</td>
+                    <td>{{ storage_data.free_space }}</td>
+                    <td>{{ storage_data.timestamp }}</td>
+                </tr>
+            </tbody>
+        </table>
+    {% endif %}
+
+    <a href="{% url 'host_list' %}" class="btn btn-secondary mt-3">Back to Hosts</a>
+</div>
+{% endblock %}

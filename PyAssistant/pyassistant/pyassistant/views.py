@@ -4,19 +4,20 @@ from .models import Host
 from .forms import HostForm
 from .utils import get_process_data_from_remote
 
+
 def add_host(request):
     if request.method == "POST":
         form = HostForm(request.POST)
         if form.is_valid():
             print("Form is valid. Saving host...")
             form.save()
-            return redirect('host_list')
+            return redirect('host_list')  
         else:
             print("Form is not valid:", form.errors)
     else:
         form = HostForm()
+    
     return render(request, 'pyassistant/add_host.html', {'form': form})
-
 
 def host_list(request):
     hosts = Host.objects.all()
