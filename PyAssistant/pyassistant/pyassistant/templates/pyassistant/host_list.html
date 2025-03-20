@@ -20,7 +20,7 @@
                     <a href="{% url 'view_host_processes' host.id %}" class="btn btn-info btn-sm">View Processes</a>
                     <a href="{% url 'storage_view' host.id %}" class="btn btn-warning btn-sm">View Storage</a>
                     <a href="{% url 'network_view' host.id %}" class="btn btn-success btn-sm">View Network</a>
-
+                    <a href="{% url 'send_message_page' host.id %}" class="btn btn-primary btn-sm">Send Message</a>  <!-- ✅ Added this -->
                 </td>
             </tr>
             {% empty %}

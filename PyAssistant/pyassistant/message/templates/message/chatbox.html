@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Host</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #chat-container {
+            width: 400px;
+            margin: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: #f8f9fa;
+        }
+        #chat-box {
+            height: 300px;
+            overflow-y: auto;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        .message {
+            margin: 5px;
+            padding: 8px;
+            border-radius: 5px;
+        }
+        .server {
+            background: #007bff;
+            color: white;
+            text-align: left;
+        }
+        .host {
+            background: #28a745;
+            color: white;
+            text-align: right;
+        }
+        #message-input {
+            width: 80%;
+            padding: 5px;
+        }
+        button {
+            padding: 5px 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+<script>
+    function fetchMessages() {
+        fetch(`/chat/hosts/{{ host.id }}/chat/messages/`)
+            .then(response => response.json())
+            .then(data => {
+                let chatBox = document.getElementById("chat-box");
+                chatBox.innerHTML = "";  // I will clear existing messages
+
+                data.messages.forEach(msg => {
+                    let msgDiv = document.createElement("div");
+                    msgDiv.classList.add("message", msg.sender === "Server" ? "server" : "host");
+                    msgDiv.innerText = `${msg.sender}: ${msg.content}`;
+                    chatBox.appendChild(msgDiv);
+                });
+
+                chatBox.scrollTop = chatBox.scrollHeight;  // Auto-scroll
+            })
+            .catch(error => console.error("Error fetching messages:", error));
+    }
+
+    function sendMessage() {
+        let input = document.getElementById("message-input");
+        let content = input.value.trim();
+        if (!content) return;
+
+        fetch(`/chat/hosts/{{ host.id }}/chat/send/`, {  // ✅ Correct URL
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken()  // ✅ CSRF Token included
+            },
+            body: JSON.stringify({ content: content })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                input.value = "";  // I will clear the input
+                fetchMessages();  // ✅ Refresh chat
+            } else {
+                alert("Error: " + data.message);
+            }
+        })
+        .catch(error => console.error("Error sending message:", error));
+    }
+
+    function getCSRFToken() {
+        let cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+        return cookie ? cookie.split('=')[1] : null; 
+    }
+
+    setInterval(fetchMessages, 2000);  // Refresh messages every 2 sec
+    window.onload = fetchMessages;
+</script>
+
+</head>
+<body>
+    <h1>Chat with Host</h1>
+    <div id="chat-container">
+        <div id="chat-box"></div>
+        <input type="text" id="message-input" placeholder="Type a message..." />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</body>
+</html>

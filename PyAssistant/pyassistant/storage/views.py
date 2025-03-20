@@ -13,10 +13,21 @@ def get_storage_data_via_ssh(host):
     Connects to a remote machine via SSH and fetches storage information.
     """
     try:
+        print(f"DEBUG: Trying to connect to {host.hostname}")  # ✅ Debug print
+
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        
 
+        # ✅ Check if hostname is valid
+        import socket
+        try:
+            resolved_ip = socket.gethostbyname(host.hostname)
+            print(f"DEBUG: Resolved IP Address: {resolved_ip}")  # ✅ Debug print
+        except socket.gaierror as e:
+            print(f"DEBUG: Hostname resolution failed: {e}")  # ✅ Debug print
+            return {'error': f"Invalid hostname: {host.hostname}"}
+
+        # ✅ Now try connecting
         ssh.connect(host.hostname, username=host.username, password=host.password)
 
         # Run `df -h` to get storage details
@@ -41,6 +52,7 @@ def get_storage_data_via_ssh(host):
 
     except Exception as e:
         return {'error': str(e)}
+
 
 def storage_view(request, host_id):
     """

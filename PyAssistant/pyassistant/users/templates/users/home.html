@@ -1,0 +1,22 @@
+{% extends "pyassistant/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="text-center">
+        <h1 class="display-4">Welcome to PyAssistant</h1>
+        <p class="lead">A remote host monitoring and management tool.</p>
+
+        {% if user.is_authenticated %}
+            <div class="alert alert-success" role="alert">
+                <strong>Welcome, {{ user.username }}!</strong> You are logged in.
+            </div>
+            <a href="{% url 'logout' %}" class="btn btn-danger btn-lg mt-3">Logout</a>
+        {% else %}
+            <div class="alert alert-warning" role="alert">
+                You are not logged in. Please log in to access the system.
+            </div>
+            <a href="{% url 'login' %}" class="btn btn-primary btn-lg mt-3">Login</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

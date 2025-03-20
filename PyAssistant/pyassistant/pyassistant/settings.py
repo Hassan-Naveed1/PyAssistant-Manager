@@ -40,7 +40,9 @@ INSTALLED_APPS = [
     'monitor',
     'pyassistant',
     'storage',
-    'network'
+    'network',
+    'message',
+    'users',
     
     
 ]
@@ -134,3 +136,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SECURE_SSL_REDIRECT = False
+
+
+AUTH_USER_MODEL = 'users.CustomUser'
