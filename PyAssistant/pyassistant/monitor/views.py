@@ -1,89 +1,100 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
-from pyassistant.models import Host  
-import psutil
-import datetime
+from pyassistant.models import Host
 import paramiko
 import logging
 
-
-def get_process_data_from_remote(host_ip, hostname, password):
-    """Retrieve process data from a remote host via SSH."""
+def get_process_data_from_remote(host_ip, username, password):
+    # First, I am setting up an SSH client to connect to the remote machine.
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     try:
+        # Now, I will connect to the remote machine using SSH credentials.
+        client.connect(host_ip, username=username, password=password)
         
-        client.connect(host_ip, username=hostname, password=password)  
+        # Once connected, I will run the `ps aux` command to get all running processes.
         stdin, stdout, stderr = client.exec_command("ps aux")
 
         process_list = []
+        # Now, I will read the output, split it into lines, and extract process details.
         for line in stdout.read().decode().splitlines()[1:]:  
             columns = line.split()
             if len(columns) > 10:
                 process_list.append({
-                    'pid': int(columns[1]),
-                    'name': columns[10],
-                    'cpu_usage': float(columns[2]),
-                    'memory_usage': float(columns[3]),
-                    'execution_time': columns[9]
+                    'pid': int(columns[1]),      # Extracting Process ID
+                    'name': columns[10],         # Extracting Process Name
+                    'cpu_usage': float(columns[2]),  # CPU Usage
+                    'memory_usage': float(columns[3]),  # Memory Usage
+                    'execution_time': columns[9]   # Execution Time
                 })
 
         return process_list
 
     except Exception as e:
+        # If something goes wrong, I will log the error and return an error message.
         logging.error(f"SSH Error: {e}")
-        return []
+        return {"error": f"SSH Connection Failed: {str(e)}"}
 
     finally:
+        # I will close the SSH connection after the data is retrieved.
         client.close()
 
 
-def process_list_view(request):
-    """View to fetch remote process data for all hosts in the database."""
-    hosts = Host.objects.all()  
-    all_processes = {}
+def host_processes_view(request, host_id):
+    # First, I will get the host details using the host ID.
+    host = get_object_or_404(Host, id=host_id)  
+
+    # Now, I will fetch all the running processes from that host via SSH.
+    processes = get_process_data_from_remote(host.ip_address, host.username, host.password)
+
+    # Finally, I will render the `host_processes.html` template with the host and processes data.
+    return render(request, 'monitor/host_processes.html', {
+        'host': host,
+        'processes': processes
+    })
 
 
-    for host in hosts:
-        try:
-            processes = get_process_data_from_remote(host.ip_address, host.hostname, host.password)
-            all_processes[host.hostname] = processes
-        except Exception as e:
+def kill_process_view(request, host_id, pid):
+    # First, I will check if the request method is `POST`. If not, I will return an error.
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Invalid request method."}, status=400)
 
-            all_processes[host.hostname] = f"Error fetching data: {e}"
+    # Now, I will get the host details based on the provided `host_id`.
+    host = get_object_or_404(Host, id=host_id)
 
-    return render(request, 'monitor/process_list.html', {'all_processes': all_processes})
-
-
-def kill_process(request, host_id, pid):
-    """Kill a process on a remote host via SSH."""
-    if request.method == "POST":
-        host = Host.objects.get(id=host_id)  
-        host_ip = host.ip_address
-        hostname = host.hostname  
-        password = host.password
-
+    try:
+        # I will set up an SSH connection to the remote host.
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(host.ip_address, username=host.username, password=host.password)
 
-        try:
-            client.connect(host_ip, username=hostname, password=password)  
-            stdin, stdout, stderr = client.exec_command(f"kill -9 {pid}")
+        # Now, I will check whether the remote machine is running Linux or Windows.
+        stdin, stdout, stderr = client.exec_command("uname")
+        os_type = stdout.read().decode().strip()
 
-            result = stdout.read().decode()
-            error = stderr.read().decode()
+        if os_type == "Linux":
+            # If it is Linux, I will use the `kill -9` command to terminate the process.
+            kill_command = f"kill -9 {pid}"
+        else:
+            # If it is Windows, I will use `taskkill` to terminate the process.
+            kill_command = f"taskkill /F /PID {pid}"
 
-            client.close()
+        # Now, I will execute the kill command on the remote machine.
+        stdin, stdout, stderr = client.exec_command(kill_command)
+        error = stderr.read().decode().strip()
 
-            if error:
-                logging.error(f"Kill process error: {error}")
-                return JsonResponse({"success": False, "message": f"Failed to terminate process {pid}. {error}"}, status=400)
+        # After executing the command, I will close the SSH connection.
+        client.close()
 
-            return JsonResponse({"success": True, "message": f"Process {pid} terminated remotely."})
+        # If there was an error, I will return the error message.
+        if error:
+            return JsonResponse({"success": False, "message": f"Error: {error}"})
+        
+        # Otherwise, I will return a success message.
+        return JsonResponse({"success": True, "message": f"Process {pid} killed successfully on {host.hostname}."})
 
-        except Exception as e:
-            logging.error(f"Kill process error: {e}")
-            return JsonResponse({"success": False, "message": f"Unexpected error: {str(e)}"}, status=500)
-
-    return JsonResponse({"success": False, "message": "Invalid request method."}, status=400)
+    except Exception as e:
+        # If anything goes wrong, I will log the error and return an error message.
+        logging.error(f"Kill process error: {e}")
+        return JsonResponse({"success": False, "message": f"Error: {str(e)}"}, status=500)

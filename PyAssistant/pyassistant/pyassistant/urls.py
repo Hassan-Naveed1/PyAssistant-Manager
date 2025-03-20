@@ -30,7 +30,7 @@ urlpatterns = [
     path('hosts/', views.host_list, name='host_list'),
     path('add/', views.add_host, name='add_host'),
     path('hosts/<int:host_id>/processes/', views.view_host_processes, name='view_host_processes'),
-    path('hosts/<int:host_id>/processes/kill/<int:pid>/', monitor_views.kill_process, name='kill_process'),  # Correct the import here
+    path('hosts/<int:host_id>/processes/kill/<int:pid>/', monitor_views.kill_process_view, name='kill_process'),
 ]
 
 
