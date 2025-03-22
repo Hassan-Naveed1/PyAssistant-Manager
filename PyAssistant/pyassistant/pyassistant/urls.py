@@ -19,20 +19,24 @@ from django.urls import path, include
 from . import views
 from monitor import views as monitor_views
 
+from . import views  # already imported above
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('users.urls')),
+    path('', views.home, name='home'),  # 👈 Add this line
+    path('users/', include('users.urls')),  # optionally namespace user views here
     path('processes/', include('monitor.urls')),
     path('storage/', include('storage.urls')),
     path('network/', include('network.urls')),
     path('chat/', include('message.urls')),
-
 
     # Host-related URLs
     path('hosts/', views.host_list, name='host_list'),
     path('add/', views.add_host, name='add_host'),
     path('hosts/<int:host_id>/processes/', views.view_host_processes, name='view_host_processes'),
     path('hosts/<int:host_id>/processes/kill/<int:pid>/', monitor_views.kill_process_view, name='kill_process'),
-]
 
+    path('hosts/<int:host_id>/install_vnc/', views.install_vnc, name='install_vnc'),
+    
+]
 
