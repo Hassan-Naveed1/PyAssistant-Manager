@@ -8,7 +8,9 @@
             <tr>
                 <th>Hostname</th>
                 <th>IP Address</th>
+                <th>Email</th>
                 <th>Actions</th>
+
             </tr>
         </thead>
         <tbody>
@@ -16,6 +18,8 @@
             <tr>
                 <td>{{ host.hostname }}</td>
                 <td>{{ host.ip_address }}</td>
+                <td>{{ host.email|default:"-" }}</td>
+
                 <td>
                     <a href="{% url 'view_host_processes' host.id %}" class="btn btn-info btn-sm">View Processes</a>
                     <a href="{% url 'storage_view' host.id %}" class="btn btn-warning btn-sm">View Storage</a>
@@ -25,7 +29,7 @@
                     <a href="http://{{ host.ip_address }}:6080/vnc.html" target="_blank" class="btn btn-primary btn-sm">🖥️ View VNC</a>
                     
                     <a href="{% url 'install_vnc' host.id %}" class="btn btn-warning btn-sm">⚙️ Install VNC</a>
-                    
+                    <a href="" class= "btn btn-warning"> Delete Host</a>
                 </td>
             </tr>
             {% empty %}

@@ -88,3 +88,5 @@ def install_vnc(request, host_id):
         messages.error(request, error_msg)
 
     return redirect('host_list')
+
+

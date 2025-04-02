@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Meta tags and title -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Host Process Manager</title>
+
     <style>
+        /* Basic page styling */
         body {
             font-family: Arial, sans-serif;
             background-color: #f8f9fa;
@@ -12,7 +15,8 @@
             padding: 20px;
             text-align: center;
         }
-        
+
+        /* Search bar style */
         #search {
             width: 300px;
             padding: 10px;
@@ -28,6 +32,7 @@
             border-color: #0056b3;
         }
 
+        /* Tabs for navigation */
         .tabs {
             display: flex;
             justify-content: center;
@@ -51,6 +56,7 @@
             background: #0056b3;
         }
 
+        /* Table styles */
         table {
             width: 100%;
             max-width: 900px;
@@ -70,11 +76,12 @@
             background-color: #007bff;
             color: white;
         }
-        
+
         th[onclick] {
             cursor: pointer;
             text-decoration: underline;
-        }   
+        }
+
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
@@ -83,6 +90,7 @@
             background-color: #f1f1f1;
         }
 
+        /* Kill button styling */
         .kill-btn {
             background-color: red;
             color: white;
@@ -97,120 +105,154 @@
         .kill-btn:hover {
             background-color: darkred;
         }
+
+        /* Bar container for CPU and RAM usage */
+        .bar-container {
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            height: 14px;
+            position: relative;
+            width: 100%;
+        }
+
+        /* Usage bar fill */
+        .bar {
+            background-color: #007bff;
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        /* Percentage label inside bar */
+        .bar-label {
+            font-size: 12px;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-weight: bold;
+        }
     </style>
 
-<script>
-    let sortColumnIndex = null;
-    let sortAscending = true;
+    <script>
+        // Variables to keep track of sorting state
+        let sortColumnIndex = null;
+        let sortAscending = true;
 
-    function fetchProcesses() {
-        fetch(window.location.href)
-            .then(response => response.text())
-            .then(html => {
-                let parser = new DOMParser();
-                let doc = parser.parseFromString(html, 'text/html');
-                let newTableBody = doc.getElementById("process-table-body").innerHTML;
-                let tableBody = document.getElementById("process-table-body");
+        // Fetch process list periodically and update table
+        function fetchProcesses() {
+            fetch(window.location.href)
+                .then(response => response.text())
+                .then(html => {
+                    let parser = new DOMParser();
+                    let doc = parser.parseFromString(html, 'text/html');
+                    let newTableBody = doc.getElementById("process-table-body").innerHTML;
+                    let tableBody = document.getElementById("process-table-body");
 
-                let searchInput = document.getElementById("search").value.toLowerCase();
-                tableBody.innerHTML = newTableBody;
+                    let searchInput = document.getElementById("search").value.toLowerCase();
+                    tableBody.innerHTML = newTableBody;
 
-                searchProcesses();
+                    searchProcesses();
 
-                // Apply sorting again after refresh
-                if (sortColumnIndex !== null) {
-                    applySorting();
+                    if (sortColumnIndex !== null) {
+                        applySorting();
+                    }
+                })
+                .catch(error => console.error('Error fetching process data:', error));
+        }
+
+        // Search filter for process names
+        function searchProcesses() {
+            let input = document.getElementById("search").value.toLowerCase();
+            let rows = document.querySelectorAll("#process-table-body tr");
+
+            rows.forEach(row => {
+                let processName = row.cells[0].textContent.toLowerCase();
+                row.style.display = processName.includes(input) ? "" : "none";
+            });
+        }
+
+        // Handle sorting when column header is clicked
+        function sortTable(columnIndex) {
+            sortAscending = (sortColumnIndex === columnIndex) ? !sortAscending : true;
+            sortColumnIndex = columnIndex;
+            applySorting();
+        }
+
+        // Sort table rows based on selected column
+        function applySorting() {
+            let rows = Array.from(document.querySelectorAll("#process-table-body tr"));
+
+            rows.sort((a, b) => {
+                let aText = a.cells[sortColumnIndex].textContent.replace('%', '').trim();
+                let bText = b.cells[sortColumnIndex].textContent.replace('%', '').trim();
+
+                let aVal = isNaN(aText) ? aText : parseFloat(aText);
+                let bVal = isNaN(bText) ? bText : parseFloat(bText);
+
+                if (aVal < bVal) return sortAscending ? -1 : 1;
+                if (aVal > bVal) return sortAscending ? 1 : -1;
+                return 0;
+            });
+
+            let tbody = document.getElementById("process-table-body");
+            tbody.innerHTML = "";
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        // Extract CSRF token from cookies
+        function getCSRFToken() {
+            let cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+            return cookie ? cookie.split('=')[1] : null;
+        }
+
+
+        // Kill process handler
+        function killProcess(host_id, pid) {
+            pid = parseInt(pid);
+            if (!pid) {
+                alert("Invalid process ID.");
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to kill process ${pid}?`)) {
+                return;
+            }
+
+            fetch(`/hosts/${host_id}/processes/kill/${pid}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                    'Content-Type': 'application/json'
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    fetchProcesses();
+                } else {
+                    alert(`Error: ${data.message}`);
                 }
             })
-            .catch(error => console.error('Error fetching process data:', error));
-    }
-
-    function searchProcesses() {
-        let input = document.getElementById("search").value.toLowerCase();
-        let rows = document.querySelectorAll("#process-table-body tr");
-
-        rows.forEach(row => {
-            let processName = row.cells[0].textContent.toLowerCase();
-            row.style.display = processName.includes(input) ? "" : "none";
-        });
-    }
-
-    function sortTable(columnIndex) {
-        sortAscending = (sortColumnIndex === columnIndex) ? !sortAscending : true;
-        sortColumnIndex = columnIndex;
-        applySorting();
-    }
-
-    function applySorting() {
-        let rows = Array.from(document.querySelectorAll("#process-table-body tr"));
-
-        rows.sort((a, b) => {
-            let aText = a.cells[sortColumnIndex].textContent.replace('%', '').trim();
-            let bText = b.cells[sortColumnIndex].textContent.replace('%', '').trim();
-
-            let aVal = isNaN(aText) ? aText : parseFloat(aText);
-            let bVal = isNaN(bText) ? bText : parseFloat(bText);
-
-            if (aVal < bVal) return sortAscending ? -1 : 1;
-            if (aVal > bVal) return sortAscending ? 1 : -1;
-            return 0;
-        });
-
-        let tbody = document.getElementById("process-table-body");
-        tbody.innerHTML = "";
-        rows.forEach(row => tbody.appendChild(row));
-    }
-
-    function getCSRFToken() {
-        let cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
-        return cookie ? cookie.split('=')[1] : null;
-    }
-
-    function killProcess(host_id, pid) {
-        pid = parseInt(pid);
-        if (!pid) {
-            alert("Invalid process ID.");
-            return;
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Failed to terminate the process.");
+            });
         }
 
-        if (!confirm(`Are you sure you want to kill process ${pid}?`)) {
-            return;
-        }
+        // Refresh process list every 3 seconds
+        setInterval(fetchProcesses, 3000);
 
-        fetch(`/hosts/${host_id}/processes/kill/${pid}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCSRFToken(),
-                'Content-Type': 'application/json'
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message);
-                fetchProcesses(); // refresh table
-            } else {
-                alert(`Error: ${data.message}`);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert("Failed to terminate the process.");
-        });
-    }
-
-    // Auto-refresh every 3 seconds
-    setInterval(fetchProcesses, 3000);
-
-    // Initial load
-    window.onload = fetchProcesses;
-</script>
-
+        // Load initial process list
+        window.onload = fetchProcesses;
+    </script>
 </head>
 <body>
-
     <h1>Host Process Manager</h1>
 
+    <!-- Navigation tabs -->
     <div class="tabs">
         <button class="tab" onclick="window.location.href='/network/'">Network Usage</button>
         <button class="tab active" onclick="window.location.href='/processes/'">Processes</button>
@@ -233,12 +275,41 @@
             
             <tbody id="process-table-body">
                 {% for process in processes %}
-                <tr>
-                    <td>{{ process.name }}</td>
+                <!-- For each process, I am marking its PID and PPID so I can toggle children via JS -->
+                <tr class="process-row"
+                    data-pid="{{ process.pid }}"
+                    data-ppid="{{ process.ppid }}"
+                    {% if process.has_children %}
+                        onclick="toggleChildren({{ process.pid }})"
+                    {% endif %}
+                >
+                    <!-- If the process has children, I will show an arrow; otherwise, just show the name -->
+                    <td>
+                        {% if process.has_children %}
+                            ▶ {{ process.name }}
+                        {% else %}
+                            {{ process.name }}
+                        {% endif %}
+                    </td>
                     <td>{{ process.pid }}</td>
                     <td>{{ process.execution_time }}</td>
-                    <td>{{ process.cpu_usage }}%</td>
-                    <td>{{ process.memory_usage }}%</td>
+            
+                    <!-- Render CPU usage as a visual bar with % label -->
+                    <td>
+                        <div class="bar-container">
+                            <div class="bar" style="width: {{ process.cpu_usage }}%;"></div>
+                            <span class="bar-label">{{ process.cpu_usage }}%</span>
+                        </div>
+                    </td>
+            
+                    <!-- Same structure for memory usage -->
+                    <td>
+                        <div class="bar-container">
+                            <div class="bar" style="width: {{ process.memory_usage }}%;"></div>
+                            <span class="bar-label">{{ process.memory_usage }}%</span>
+                        </div>
+                    </td>
+            
                     <td><button class="kill-btn" onclick="killProcess('{{ host.id }}', '{{ process.pid }}')">Kill</button></td>
                 </tr>
                 {% empty %}

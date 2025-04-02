@@ -13,21 +13,29 @@ def get_process_data_from_remote(host_ip, username, password):
         # Now, I will connect to the remote machine using SSH credentials.
         client.connect(host_ip, username=username, password=password)
         
-        # Once connected, I will run the `ps aux` command to get all running processes.
-        stdin, stdout, stderr = client.exec_command("ps aux")
+        # Once connected, I will run the `ps -eo pid,ppid,pcpu,pmem,etime,comm` command to get process info with parent-child relation.
+        stdin, stdout, stderr = client.exec_command("ps -eo pid,ppid,pcpu,pmem,etime,comm")
 
         process_list = []
         # Now, I will read the output, split it into lines, and extract process details.
         for line in stdout.read().decode().splitlines()[1:]:  
-            columns = line.split()
-            if len(columns) > 10:
+            columns = line.split(None, 5)
+            if len(columns) == 6:
                 process_list.append({
-                    'pid': int(columns[1]),      # Extracting Process ID
-                    'name': columns[10],         # Extracting Process Name
-                    'cpu_usage': float(columns[2]),  # CPU Usage
-                    'memory_usage': float(columns[3]),  # Memory Usage
-                    'execution_time': columns[9]   # Execution Time
+                    'pid': int(columns[0]),         # Extracting Process ID
+                    'ppid': int(columns[1]),        # Extracting Parent Process ID
+                    'cpu_usage': float(columns[2]), # CPU Usage
+                    'memory_usage': float(columns[3]), # Memory Usage
+                    'execution_time': columns[4],   # Execution Time
+                    'name': columns[5]              # Extracting Process Name
                 })
+
+        # I will collect all parent PIDs from the list to determine which processes have children.
+        all_ppids = {proc['ppid'] for proc in process_list}
+
+        # Now, I will mark each process with has_children=True if its PID is found in the list of PPIDs.
+        for proc in process_list:
+            proc['has_children'] = proc['pid'] in all_ppids
 
         return process_list
 
@@ -39,7 +47,6 @@ def get_process_data_from_remote(host_ip, username, password):
     finally:
         # I will close the SSH connection after the data is retrieved.
         client.close()
-
 
 def host_processes_view(request, host_id):
     # First, I will get the host details using the host ID.

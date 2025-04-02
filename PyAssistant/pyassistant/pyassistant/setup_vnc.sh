@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# 🛠️ Ensure required tools are installed
+echo "📦 Checking and installing dependencies..."
+sudo apt update
+sudo apt install -y net-tools
+
 # 🟢 Set VNC password
 mkdir -p ~/.vnc
 x11vnc -storepasswd mysecret123 ~/.vnc/passwd

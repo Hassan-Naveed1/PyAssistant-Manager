@@ -8,6 +8,7 @@ class Host(models.Model):
     ip_address = models.GenericIPAddressField(unique=True)
     username = models.CharField(max_length=100)  
     password = models.CharField(max_length=255)
+    email = models.EmailField(blank=True, null=True)  # Optional email field
 
     # I add a new field for the VNC port (default is 6080 for noVNC)
     vnc_port = models.PositiveIntegerField(default=6080)
