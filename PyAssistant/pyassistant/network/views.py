@@ -94,7 +94,7 @@ def network_view(request, host_id):
     buf.seek(0)
     string = base64.b64encode(buf.read()).decode()
     uri = 'data:image/png;base64,' + string
-    plt.close(fig)  # Closing the figure to free up memory.
+    plt.close(fig)  
 
     # Finally, I pass the generated graph and network data to the template.
     return render(request, 'network/network_detail.html', {
