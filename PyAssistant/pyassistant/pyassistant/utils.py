@@ -1,8 +1,8 @@
 import paramiko
 import logging
 
+# Here I am connecting to a remote host via SSH to retrieve process list using `ps aux`
 def get_process_data_from_remote(host_ip, username, password):
-    """Retrieve process data from a remote host via SSH."""
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 

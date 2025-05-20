@@ -1,17 +1,20 @@
 {% extends "pyassistant/base.html" %}
 
 {% block content %}
+<!-- Here I am showing a welcome message and login status on the homepage -->
 <div class="container mt-5">
     <div class="text-center">
         <h1 class="display-4">Welcome to PyAssistant</h1>
         <p class="lead">A remote host monitoring and management tool.</p>
 
         {% if user.is_authenticated %}
+            <!-- Here I am showing a success message and logout button if user is logged in -->
             <div class="alert alert-success" role="alert">
                 <strong>Welcome, {{ user.username }}!</strong> You are logged in.
             </div>
             <a href="{% url 'logout' %}" class="btn btn-danger btn-lg mt-3">Logout</a>
         {% else %}
+            <!-- Here I am showing a warning message and login button if user is not logged in -->
             <div class="alert alert-warning" role="alert">
                 You are not logged in. Please log in to access the system.
             </div>

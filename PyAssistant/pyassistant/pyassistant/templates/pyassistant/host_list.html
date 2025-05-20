@@ -1,6 +1,7 @@
 {% extends "pyassistant/base.html" %}
 
 {% block content %}
+<!-- Here I am displaying a table of all registered hosts -->
 <div class="container mt-4">
     <h2>Registered Hosts</h2>
     <table class="table table-striped">
@@ -10,7 +11,6 @@
                 <th>IP Address</th>
                 <th>Email</th>
                 <th>Actions</th>
-
             </tr>
         </thead>
         <tbody>
@@ -20,21 +20,18 @@
                 <td>{{ host.ip_address }}</td>
                 <td>{{ host.email|default:"-" }}</td>
 
+                <!-- Here I am adding buttons to view each host's functions and VNC access -->
                 <td>
                     <a href="{% url 'view_host_processes' host.id %}" class="btn btn-info btn-sm">View Processes</a>
                     <a href="{% url 'storage_view' host.id %}" class="btn btn-warning btn-sm">View Storage</a>
                     <a href="{% url 'network_view' host.id %}" class="btn btn-success btn-sm">View Network</a>
-                    <a href="{% url 'send_message_page' host.id %}" class="btn btn-primary btn-sm">Send Message</a>  
-                    <!-- I add a VNC button that opens the VNC interface in a new tab -->
                     <a href="http://{{ host.ip_address }}:6080/vnc.html" target="_blank" class="btn btn-primary btn-sm">🖥️ View VNC</a>
-                    
                     <a href="{% url 'install_vnc' host.id %}" class="btn btn-warning btn-sm">⚙️ Install VNC</a>
-                    
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="3" class="text-center">No hosts added yet.</td>
+                <td colspan="4" class="text-center">No hosts added yet.</td>
             </tr>
             {% endfor %}
         </tbody>

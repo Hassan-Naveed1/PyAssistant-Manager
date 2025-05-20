@@ -63,7 +63,7 @@ def host_processes_view(request, host_id):
 
 
 def kill_process_view(request, host_id, pid):
-    # First, I will check if the request method is `POST`. If not, I will return an error.
+    # First, I will check if the request method is `POST`. If not,  return an error.
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Invalid request method."}, status=400)
 

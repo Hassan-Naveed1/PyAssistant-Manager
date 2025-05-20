@@ -1,21 +1,18 @@
-# models.py in pyassistant app
-
 from django.db import models
 
+# Here I am defining the Host model to store SSH and connection info for each remote machine
 class Host(models.Model):
-    # I store the hostname and IP address of the remote machine
     hostname = models.CharField(max_length=255, unique=True)
     ip_address = models.GenericIPAddressField(unique=True)
-    username = models.CharField(max_length=100)  
+    username = models.CharField(max_length=100)
     password = models.CharField(max_length=255)
-    email = models.EmailField(blank=True, null=True)  # Optional email field
+    email = models.EmailField(blank=True, null=True)
 
-    # I add a new field for the VNC port (default is 6080 for noVNC)
+    # Here I am adding a default VNC port field so each host can be accessed visually
     vnc_port = models.PositiveIntegerField(default=6080)
 
     def __str__(self):
         return self.hostname
 
-    # I create a method that returns the full VNC URL for this host
     def get_vnc_url(self):
         return f"http://{self.ip_address}:{self.vnc_port}"

@@ -1,6 +1,7 @@
 from django.db import models
-from pyassistant.models import Host  # Import Host model
+from pyassistant.models import Host 
 
+# Here I am defining the model to store storage usage data for each host
 class StorageData(models.Model):
     host = models.OneToOneField(Host, on_delete=models.CASCADE, related_name='storage')
     total_space = models.FloatField()

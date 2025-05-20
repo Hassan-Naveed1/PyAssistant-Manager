@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'pyassistant',
     'storage',
     'network',
-    'message',
     'users',
     
     
@@ -75,7 +74,9 @@ TEMPLATES = [
     },
 ]
 
+from django.urls import reverse_lazy
 
+LOGIN_URL = reverse_lazy('login')
 
 
 

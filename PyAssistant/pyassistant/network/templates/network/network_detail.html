@@ -1,14 +1,16 @@
 {% extends "pyassistant/base.html" %}
 
 {% block content %}
+<!-- Here I am creating the main container for the network usage content -->
 <div class="container mt-4">
+    <!-- Here I am showing the hostname for which the network data is displayed -->
     <h2>Network Usage for {{ host.hostname }}</h2>
 
-    <!-- Auto-refresh every 3 seconds -->
+    <!-- Here I am auto-refreshing the page every 3 seconds to update network data -->
     <script>
         setTimeout(function() {
             location.reload();
-        }, 3000);  // 3000ms = 3 seconds
+        }, 3000);
     </script>
 
     {% if error %}
@@ -16,13 +18,13 @@
             {{ error }}
         </div>
     {% else %}
-        <!-- Show the network graph ABOVE the table -->
+        <!-- Here I am showing the network usage graph (upload and download speeds) -->
         <h3>Network Speeds</h3>
         <div class="text-center">
             <img src="{{ graph }}" alt="Network Graph" class="img-fluid" style="max-width: 500px;">
         </div>
 
-        <!-- Keep the table below the graph -->
+        <!-- Here I am displaying a table for detailed network metrics -->
         <table class="table table-bordered mt-4">
             <thead>
                 <tr>
@@ -43,6 +45,9 @@
         </table>
     {% endif %}
 
-    <a href="{% url 'host_list' %}" class="btn btn-secondary mt-3">Back to Hosts</a>
+    <!-- Here I am adding navigation buttons to go back to the process list and dashboard -->
+    <div class="mt-4">
+        <a href="{% url 'host_list' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
 </div>
 {% endblock %}

@@ -1,6 +1,7 @@
 {% extends "storage/storage_base.html" %}
 
 {% block content %}
+<!-- Here I am displaying the storage details for the selected host -->
 <div class="container mt-4">
     <h2>Storage Details for {{ host.hostname }}</h2>
 
@@ -9,13 +10,13 @@
             {{ error }}
         </div>
     {% else %}
-        <!--Show the graph ABOVE the table -->
+        <!-- Here I am showing the storage usage graph above the table -->
         <h3>Storage Usage</h3>
         <div class="text-center">
             <img src="{{ graph }}" alt="Storage Graph" class="img-fluid" style="max-width: 500px;">
         </div>
 
-        <!--Keep the table below the graph -->
+        <!-- Here I am displaying a table for total, used, and free space -->
         <table class="table table-bordered mt-4">
             <thead>
                 <tr>
@@ -36,6 +37,7 @@
         </table>
     {% endif %}
 
+    <!-- Here I am adding a button to go back to the host list -->
     <a href="{% url 'host_list' %}" class="btn btn-secondary mt-3">Back to Hosts</a>
 </div>
 {% endblock %}

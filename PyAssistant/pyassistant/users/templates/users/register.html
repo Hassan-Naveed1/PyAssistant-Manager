@@ -1,6 +1,7 @@
 {% extends "pyassistant/base.html" %}
 
 {% block content %}
+<!-- Here I am showing the registration form for creating a new user account -->
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-4">
@@ -9,14 +10,17 @@
                     <h3 class="text-center mb-3">Register</h3>
                     <form method="POST">
                         {% csrf_token %}
+                        <!-- Here I am rendering the username input field -->
                         <div class="mb-3">
                             {{ form.username.label_tag }}
                             {{ form.username }}
                         </div>
+                        <!-- Here I am rendering the first password input field -->
                         <div class="mb-3">
                             {{ form.password1.label_tag }}
                             {{ form.password1 }}
                         </div>
+                        <!-- Here I am rendering the second password input field -->
                         <div class="mb-3">
                             {{ form.password2.label_tag }}
                             {{ form.password2 }}

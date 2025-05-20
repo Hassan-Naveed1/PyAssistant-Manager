@@ -4,13 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}PyAssistant{% endblock %}</title>
-    
-    <!-- Bootstrap CSS -->
+
+    <!-- Here I am including Bootstrap for styling -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Custom CSS -->
+
+    <!-- Here I am writing custom styles for layout and footer positioning -->
     <style>
-        /* Ensure full height for layout */
         html, body {
             height: 100%;
             margin: 0;
@@ -19,10 +18,9 @@
             flex-direction: column;
         }
 
-        /* Fix navbar padding */
         .navbar {
             background-color: #212529;
-            padding: 10px 15px; /* Reduced padding */
+            padding: 10px 15px;
         }
 
         .navbar-brand {
@@ -31,11 +29,10 @@
         }
 
         .container {
-            flex: 1; /* Pushes footer to the bottom */
-            margin-top: 20px; /* Adjust spacing under navbar */
+            flex: 1;
+            margin-top: 20px;
         }
 
-        /* Make sure the footer sticks to the bottom */
         footer {
             text-align: center;
             padding: 15px;
@@ -50,7 +47,7 @@
 </head>
 <body>
 
-<!-- Navbar -->
+<!-- Here I am building the navigation bar with links to various views -->
 <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
         <a class="navbar-brand" href="/">PyAssistant</a>
@@ -61,7 +58,6 @@
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link" href="{% url 'host_list' %}">Hosts</a></li>
                 <li class="nav-item"><a class="nav-link" href="{% url 'add_host' %}">Add Host</a></li>
-
                 {% if user.is_authenticated %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'logout' %}">Logout</a></li>
                 {% else %}
@@ -73,17 +69,17 @@
     </div>
 </nav>
 
-<!-- Main Content -->
+<!-- Here I am defining the container where each page's content will be rendered -->
 <div class="container">
     {% block content %}{% endblock %}
 </div>
 
-<!-- Footer -->
+<!-- Here I am adding a footer for branding and copyright -->
 <footer>
     <p>&copy; 2025 PyAssistant - Remote Host Monitoring</p>
 </footer>
 
-<!-- Bootstrap JS -->
+<!-- Here I am loading Bootstrap JavaScript bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
